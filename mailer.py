@@ -1,5 +1,6 @@
 import smtplib
 import datetime
+import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from config import SMTP_HOST, SMTP_PORT, EMAIL_FROM, EMAIL_PASSWORD, EMAIL_TO
@@ -12,37 +13,52 @@ EMAIL_TEMPLATE = """
 <style>
   body {{ font-family: -apple-system, Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }}
   .container {{ max-width: 780px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; }}
-  .header {{ background: #0a0a14; padding: 28px 32px; }}
-  .header h1 {{ color: #FFD700; margin: 0; font-size: 22px; letter-spacing: 1px; }}
+  .header {{ background: #1a2a1a; padding: 28px 32px; }}
+  .header h1 {{ color: #7FD67F; margin: 0; font-size: 22px; letter-spacing: 1px; }}
   .header p {{ color: rgba(255,255,255,0.5); margin: 6px 0 0; font-size: 13px; }}
   .content {{ padding: 32px; }}
+  .consigliato-box {{ background: linear-gradient(135deg, #1a2a1a, #0d1a0d); border: 2px solid #7FD67F;
+    border-radius: 8px; padding: 20px 24px; margin-bottom: 32px; }}
+  .consigliato-box .badge {{ background: #7FD67F; color: #000; font-weight: 700; font-size: 12px;
+    padding: 3px 12px; border-radius: 20px; display: inline-block; margin-bottom: 10px; }}
+  .consigliato-box h2 {{ color: #7FD67F; margin: 0 0 8px; font-size: 16px; }}
+  .consigliato-box p {{ color: rgba(255,255,255,0.8); margin: 0; font-size: 14px; line-height: 1.5; }}
   .article-block {{ border: 1px solid #e8e8e8; border-radius: 6px; margin-bottom: 40px; overflow: hidden; }}
-  .article-header {{ background: #0a0a14; padding: 14px 20px; }}
-  .article-num {{ background: #FFD700; color: #000; font-weight: 700; font-size: 13px; padding: 3px 10px; border-radius: 3px; }}
+  .article-header {{ background: #1a2a1a; padding: 14px 20px; }}
+  .article-num {{ background: #7FD67F; color: #000; font-weight: 700; font-size: 13px; padding: 3px 10px; border-radius: 3px; }}
   .article-body {{ padding: 24px; }}
   .article-body h1 {{ font-size: 20px; color: #111; margin: 0 0 16px; line-height: 1.3; }}
-  .article-body h2 {{ font-size: 16px; color: #222; margin: 20px 0 10px; border-left: 3px solid #FFD700; padding-left: 10px; }}
+  .article-body h2 {{ font-size: 16px; color: #222; margin: 20px 0 10px; border-left: 3px solid #7FD67F; padding-left: 10px; }}
   .article-body p {{ font-size: 14px; color: #444; line-height: 1.7; margin: 0 0 12px; }}
   .seo-block {{ background: #f9f9f0; border: 1px solid #e8e4c0; border-radius: 4px; padding: 12px 16px; margin-top: 16px; font-size: 12px; color: #666; }}
-  .image-block {{ background: #f0f4ff; border: 1px solid #c0d0e8; border-radius: 4px; padding: 12px 16px; margin-top: 12px; font-size: 12px; }}
-  .image-block strong {{ color: #3355aa; display: block; margin-bottom: 6px; }}
-  .prompt {{ font-family: monospace; background: #e8eeff; padding: 6px 10px; border-radius: 3px; display: block; margin-top: 4px; color: #223; }}
-  .firefly-link {{ display: inline-block; margin-top: 8px; background: #3355aa; color: #fff; padding: 4px 12px; border-radius: 3px; text-decoration: none; font-size: 11px; font-weight: 700; }}
+  .image-block {{ background: #f0fff0; border: 1px solid #b0d8b0; border-radius: 4px; padding: 12px 16px; margin-top: 12px; font-size: 12px; }}
+  .image-block strong {{ color: #2a7a2a; display: block; margin-bottom: 6px; }}
+  .prompt {{ font-family: monospace; background: #e8ffe8; padding: 6px 10px; border-radius: 3px; display: block; margin-top: 4px; color: #223; }}
+  .firefly-link {{ display: inline-block; margin-top: 8px; background: #2a7a2a; color: #fff; padding: 4px 12px; border-radius: 3px; text-decoration: none; font-size: 11px; font-weight: 700; }}
   .footer {{ background: #f9f9f9; padding: 20px 32px; font-size: 12px; color: #aaa; border-top: 1px solid #eee; text-align: center; }}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <h1>IncastroPC - Articoli del giorno</h1>
-    <p>{count} articoli pronti per WordPress - {date}</p>
+    <h1>🐧 IncastroPC Open Source</h1>
+    <p>{count} articoli pronti per WordPress · {date}</p>
   </div>
-  <div class="content">{articles_html}</div>
-  <div class="footer">Generato da IncastroPC News Bot - {date}</div>
+  <div class="content">
+    {consigliato_html}
+    {articles_html}
+  </div>
+  <div class="footer">Generato da IncastroPC Open Source Bot · {date}</div>
 </div>
 </body>
 </html>
 """
+
+def parse_consigliato(raw_text):
+    match = re.search(r"==CONSIGLIATO==(.*?)==FINE_CONSIGLIATO==", raw_text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return ""
 
 def parse_articles(raw_text):
     articles = []
@@ -53,6 +69,31 @@ def parse_articles(raw_text):
             block = block.replace("<!-- ARTICOLO -->", "").strip()
             articles.append(block)
     return articles
+
+def format_consigliato_html(consigliato_text, articles):
+    if not consigliato_text:
+        return ""
+    lines = consigliato_text.strip().split("\n")
+    numero = lines[0].strip() if lines else "1"
+    motivazione = " ".join(lines[1:]).strip() if len(lines) > 1 else ""
+
+    titolo = ""
+    try:
+        idx = int(numero) - 1
+        if 0 <= idx < len(articles):
+            block = articles[idx]
+            match = re.search(r"<h1>(.*?)</h1>", block)
+            if match:
+                titolo = match.group(1)
+    except:
+        pass
+
+    return f"""
+    <div class="consigliato-box">
+      <span class="badge">⭐ PUBBLICA OGGI — Articolo {numero}</span>
+      <h2>{titolo}</h2>
+      <p>{motivazione}</p>
+    </div>"""
 
 def format_article_html(block, index):
     yoast_kp = yoast_meta = yoast_slug = ""
@@ -90,19 +131,10 @@ def format_article_html(block, index):
     if image_cover or image_body:
         image_block = '<div class="image-block"><strong>🎨 Prompt immagini per Adobe Firefly</strong>'
         if image_cover:
-            image_block += (
-                '<b>Copertina:</b>'
-                '<span class="prompt">' + image_cover + '</span>'
-            )
+            image_block += '<b>Copertina:</b><span class="prompt">' + image_cover + '</span>'
         if image_body:
-            image_block += (
-                '<b style="display:block;margin-top:8px;">Immagine interna:</b>'
-                '<span class="prompt">' + image_body + '</span>'
-            )
-        image_block += (
-            '<br><a href="https://firefly.adobe.com" class="firefly-link" target="_blank">'
-            '→ Apri Adobe Firefly</a></div>'
-        )
+            image_block += '<b style="display:block;margin-top:8px;">Immagine interna:</b><span class="prompt">' + image_body + '</span>'
+        image_block += '<br><a href="https://firefly.adobe.com" class="firefly-link" target="_blank">→ Apri Adobe Firefly</a></div>'
 
     return (
         '<div class="article-block">'
@@ -113,7 +145,11 @@ def format_article_html(block, index):
 
 def send_digest(raw_text):
     today = datetime.date.today().strftime("%d %B %Y")
+
+    consigliato_text = parse_consigliato(raw_text)
     article_blocks = parse_articles(raw_text)
+
+    consigliato_html = format_consigliato_html(consigliato_text, article_blocks)
 
     if not article_blocks:
         articles_html = "<pre>" + raw_text[:2000] + "</pre>"
@@ -126,12 +162,13 @@ def send_digest(raw_text):
 
     html_body = EMAIL_TEMPLATE.format(
         articles_html=articles_html,
+        consigliato_html=consigliato_html,
         count=count,
         date=today
     )
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = "IncastroPC Articoli - " + today
+    msg["Subject"] = "🐧 IncastroPC Open Source — " + today
     msg["From"] = EMAIL_FROM
     msg["To"] = EMAIL_TO
     msg.attach(MIMEText(html_body, "html"))
