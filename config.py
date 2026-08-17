@@ -39,19 +39,17 @@ TELEGRAM_CHAT   = os.environ.get("TELEGRAM_CHAT", "")
 
 # ─── Feed RSS ─────────────────────────────────────────────
 RSS_FEEDS = [
-    ("GamingOnLinux",     "https://www.gamingonlinux.com/article_rss.php"),
+    ("OMG Ubuntu",        "https://www.omgubuntu.co.uk/feed"),
+    ("It's FOSS News",    "https://news.itsfoss.com/rss"),
+    ("LWN.net",           "https://lwn.net/headlines/rss"),
     ("Phoronix",          "https://www.phoronix.com/rss.php"),
-    ("Boiling Steam",     "https://boilingsteam.com/feed/"),
-    ("r/linux_gaming",    "https://www.reddit.com/r/linux_gaming/.rss"),
+    ("Linux Today",       "https://www.linuxtoday.com/feed/"),
+    ("DebugPoint",        "https://debugpoint.com/feed/"),
+    ("r/opensource",      "https://www.reddit.com/r/opensource/.rss"),
     ("r/linux",           "https://www.reddit.com/r/linux/.rss"),
-    ("r/SteamDeck",       "https://www.reddit.com/r/SteamDeck/.rss"),
-    ("r/minipc",          "https://www.reddit.com/r/MiniPCs/.rss"),
+    ("r/selfhosted",      "https://www.reddit.com/r/selfhosted/.rss"),
     ("Tom's Hardware IT", "https://www.tomshw.it/rss_news.xml"),
-    ("Everyeye",          "https://www.everyeye.it/rss_news.xml"),
     ("Multiplayer.it",    "https://www.multiplayer.it/rss/news.xml"),
-    ("Tom's Hardware",    "https://www.tomshardware.com/feeds/all"),
-    ("PC Gamer",          "https://www.pcgamer.com/rss/"),
-    ("Rock Paper Shotgun","https://www.rockpapershotgun.com/feed"),
 ]
 
 # ─── Keywords ─────────────────────────────────────────────
